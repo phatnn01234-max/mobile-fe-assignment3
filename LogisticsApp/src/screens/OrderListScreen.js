@@ -1,6 +1,6 @@
 // src/screens/OrderListScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TextInput, Button, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, FlatList, TextInput, Button, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native'; // ĐÃ THÊM Platform
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchOrders, addOrder, deleteOrder, updateOrder } from '../redux/orderSlice';
 import { logout } from '../redux/authSlice';
@@ -18,12 +18,13 @@ const OrderListScreen = () => {
     // Lần đầu vào màn hình: Tải danh sách đơn hàng (ViewAll)
     useEffect(() => {
         dispatch(fetchOrders());
-    }, [dispatch]); // Thêm dispatch vào dependency array cho chuẩn React hook
+    }, [dispatch]);
 
     // Hiển thị Alert khi xảy ra lỗi tải danh sách (GET /api/orders)
     useEffect(() => {
         if (error) {
-            Alert.alert("Lỗi Hệ Thống", error);
+            if (Platform.OS === 'web') window.alert("Lỗi Hệ Thống: " + error);
+            else Alert.alert("Lỗi Hệ Thống", error);
         }
     }, [error]);
 
@@ -34,14 +35,18 @@ const OrderListScreen = () => {
 
     // 2. Thao tác Create
     const handleAdd = () => {
-        if (!newName || !newAddress) return Alert.alert("Lỗi", "Vui lòng nhập tên và địa chỉ");
+        if (!newName || !newAddress) {
+            if (Platform.OS === 'web') return window.alert("Vui lòng nhập tên và địa chỉ");
+            return Alert.alert("Lỗi", "Vui lòng nhập tên và địa chỉ");
+        }
         dispatch(addOrder({ customerName: newName, address: newAddress, total: 200000 }))
             .unwrap()
             .then(() => {
                 setNewName(''); setNewAddress(''); // Xóa form sau khi thêm thành công
             })
             .catch((err) => {
-                Alert.alert("Lỗi Thêm Mới", err);
+                if (Platform.OS === 'web') window.alert("Lỗi Thêm Mới: " + err);
+                else Alert.alert("Lỗi Thêm Mới", err);
             });
     };
 
@@ -53,22 +58,36 @@ const OrderListScreen = () => {
         }))
             .unwrap()
             .catch((err) => {
-                Alert.alert("Lỗi Cập Nhật", err);
+                if (Platform.OS === 'web') window.alert("Lỗi Cập Nhật: " + err);
+                else Alert.alert("Lỗi Cập Nhật", err);
             });
     };
 
-    // 4. Thao tác Delete
+    // 4. Thao tác Delete (ĐÃ SỬA ĐỂ TƯƠNG THÍCH VỚI WEB)
     const handleDelete = (id) => {
-        Alert.alert("Xác nhận", "Bạn có chắc muốn xóa đơn này?", [
-            { text: "Hủy", style: "cancel" },
-            { text: "Xóa", onPress: () => {
+        if (Platform.OS === 'web') {
+            // Hiển thị hộp thoại xác nhận của trình duyệt Web
+            const confirmDelete = window.confirm("Bạn có chắc muốn xóa đơn này?");
+            if (confirmDelete) {
                 dispatch(deleteOrder(id))
                     .unwrap()
                     .catch((err) => {
-                        Alert.alert("Lỗi Xóa Đơn", err);
+                        window.alert("Lỗi Xóa Đơn: " + err);
                     });
-            }, style: 'destructive' }
-        ]);
+            }
+        } else {
+            // Hiển thị hộp thoại của App Mobile (iOS/Android)
+            Alert.alert("Xác nhận", "Bạn có chắc muốn xóa đơn này?", [
+                { text: "Hủy", style: "cancel" },
+                { text: "Xóa", onPress: () => {
+                    dispatch(deleteOrder(id))
+                        .unwrap()
+                        .catch((err) => {
+                            Alert.alert("Lỗi Xóa Đơn", err);
+                        });
+                }, style: 'destructive' }
+            ]);
+        }
     };
 
     // Dùng Component OrderItem đã tách
@@ -120,13 +139,12 @@ const OrderListScreen = () => {
     );
 };
 
-// Đã xóa các style của OrderItem đi cho file nhẹ gọn
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 15, backgroundColor: '#fff' },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, marginTop: 30 },
     title: { fontSize: 20, fontWeight: 'bold' },
     row: { flexDirection: 'row', marginBottom: 15, gap: 10 },
-    input: { borderWidth: 1, borderColor: '#ddd', padding: 8, borderRadius: 5, backgroundColor: '#f9f9f9', marginBottom: 10 }, // Thêm marginBottom nhẹ cho input addForm
+    input: { borderWidth: 1, borderColor: '#ddd', padding: 8, borderRadius: 5, backgroundColor: '#f9f9f9', marginBottom: 10 },
     addForm: { marginBottom: 20, padding: 10, backgroundColor: '#f0f0f0', borderRadius: 8 },
 });
 
