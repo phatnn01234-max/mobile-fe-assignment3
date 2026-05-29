@@ -17,7 +17,12 @@ export const fetchOrders = createAsyncThunk(
             });
             return response.data; // Trả về mảng đơn hàng
         } catch (error) {
-            return rejectWithValue('Lỗi tải danh sách đơn hàng');
+            console.error(`[API Error] GET ${keyword ? `/api/orders/search?keyword=${keyword}` : '/api/orders'} thất bại:`, {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+            return rejectWithValue(error.response?.data?.message || 'Lỗi tải danh sách đơn hàng');
         }
     }
 );
@@ -34,7 +39,12 @@ export const addOrder = createAsyncThunk(
             dispatch(fetchOrders()); // Thêm xong thì tự động gọi API tải lại danh sách
             return true;
         } catch (error) {
-            return rejectWithValue('Lỗi thêm đơn hàng');
+            console.error(`[API Error] POST /api/orders thất bại:`, {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+            return rejectWithValue(error.response?.data?.message || 'Lỗi thêm đơn hàng');
         }
     }
 );
@@ -51,7 +61,12 @@ export const deleteOrder = createAsyncThunk(
             dispatch(fetchOrders()); // Xóa xong tải lại danh sách
             return true;
         } catch (error) {
-            return rejectWithValue('Lỗi xóa đơn hàng');
+            console.error(`[API Error] DELETE /api/orders/${id} thất bại:`, {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+            return rejectWithValue(error.response?.data?.message || 'Lỗi xóa đơn hàng');
         }
     }
 );
@@ -68,7 +83,12 @@ export const updateOrder = createAsyncThunk(
             dispatch(fetchOrders()); // Sửa xong tải lại danh sách
             return true;
         } catch (error) {
-            return rejectWithValue('Lỗi cập nhật đơn hàng');
+            console.error(`[API Error] PUT /api/orders/${id} thất bại:`, {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+            return rejectWithValue(error.response?.data?.message || 'Lỗi cập nhật đơn hàng');
         }
     }
 );

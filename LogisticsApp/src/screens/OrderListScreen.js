@@ -8,7 +8,7 @@ import OrderItem from '../components/OrderItem'; // IMPORT COMPONENT VÀO ĐÂY
 
 const OrderListScreen = () => {
     const dispatch = useDispatch();
-    const { items, isLoading } = useSelector((state) => state.orders);
+    const { items, isLoading, error } = useSelector((state) => state.orders);
     
     // State cho Search và Form thêm đơn hàng
     const [searchKey, setSearchKey] = useState('');
@@ -20,6 +20,13 @@ const OrderListScreen = () => {
         dispatch(fetchOrders());
     }, [dispatch]); // Thêm dispatch vào dependency array cho chuẩn React hook
 
+    // Hiển thị Alert khi xảy ra lỗi tải danh sách (GET /api/orders)
+    useEffect(() => {
+        if (error) {
+            Alert.alert("Lỗi Hệ Thống", error);
+        }
+    }, [error]);
+
     // 1. Thao tác Search
     const handleSearch = () => {
         dispatch(fetchOrders(searchKey));
@@ -28,8 +35,14 @@ const OrderListScreen = () => {
     // 2. Thao tác Create
     const handleAdd = () => {
         if (!newName || !newAddress) return Alert.alert("Lỗi", "Vui lòng nhập tên và địa chỉ");
-        dispatch(addOrder({ customerName: newName, address: newAddress, total: 200000 }));
-        setNewName(''); setNewAddress(''); // Xóa form sau khi thêm
+        dispatch(addOrder({ customerName: newName, address: newAddress, total: 200000 }))
+            .unwrap()
+            .then(() => {
+                setNewName(''); setNewAddress(''); // Xóa form sau khi thêm thành công
+            })
+            .catch((err) => {
+                Alert.alert("Lỗi Thêm Mới", err);
+            });
     };
 
     // 3. Thao tác Update (Chuyển sang trạng thái Đã giao)
@@ -37,14 +50,24 @@ const OrderListScreen = () => {
         dispatch(updateOrder({ 
             id: item.id, 
             orderData: { ...item, status: 'Delivered' } 
-        }));
+        }))
+            .unwrap()
+            .catch((err) => {
+                Alert.alert("Lỗi Cập Nhật", err);
+            });
     };
 
     // 4. Thao tác Delete
     const handleDelete = (id) => {
         Alert.alert("Xác nhận", "Bạn có chắc muốn xóa đơn này?", [
             { text: "Hủy", style: "cancel" },
-            { text: "Xóa", onPress: () => dispatch(deleteOrder(id)), style: 'destructive' }
+            { text: "Xóa", onPress: () => {
+                dispatch(deleteOrder(id))
+                    .unwrap()
+                    .catch((err) => {
+                        Alert.alert("Lỗi Xóa Đơn", err);
+                    });
+            }, style: 'destructive' }
         ]);
     };
 

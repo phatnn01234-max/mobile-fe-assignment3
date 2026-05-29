@@ -14,6 +14,12 @@ export const loginUser = createAsyncThunk(
             // Trả về token và thông báo nếu thành công
             return response.data; 
         } catch (error) {
+            // Log lỗi chi tiết ra console
+            console.error(`[API Error] POST /login thất bại:`, {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
             // Trả về lỗi nếu sai mật khẩu hoặc lỗi mạng
             return rejectWithValue(error.response?.data?.message || 'Lỗi kết nối đến server');
         }
